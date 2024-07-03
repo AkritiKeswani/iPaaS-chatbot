@@ -10,8 +10,8 @@ import UploadImagePreview from "../upload-image-preview";
 import { ChatHandler } from "./chat.interface";
 import { useCsv } from "./hooks/use-csv";
 
-export default function ChatInput(
-  props: Pick<
+interface ChatInputProps
+  extends Pick<
     ChatHandler,
     | "isLoading"
     | "input"
@@ -22,8 +22,22 @@ export default function ChatInput(
     | "messages"
     | "setInput"
     | "append"
-  >,
-) {
+  > {
+  handleAuthentication?: () => Promise<void>;
+}
+
+export default function ChatInput({
+  isLoading,
+  input,
+  onFileUpload,
+  onFileError,
+  handleSubmit,
+  handleInputChange,
+  messages,
+  setInput,
+  append,
+  handleAuthentication,
+}: ChatInputProps) {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const { files: csvFiles, upload, remove, reset } = useCsv();
 
@@ -52,20 +66,18 @@ export default function ChatInput(
     return annotations as JSONValue[];
   };
 
-  // default submit function does not handle including annotations in the message
-  // so we need to use append function to submit new message with annotations
   const handleSubmitWithAnnotations = (
     e: React.FormEvent<HTMLFormElement>,
     annotations: JSONValue[] | undefined,
   ) => {
     e.preventDefault();
-    props.append!({
-      content: props.input,
+    append!({
+      content: input,
       role: "user",
       createdAt: new Date(),
       annotations,
     });
-    props.setInput!("");
+    setInput!("");
   };
 
   const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -76,7 +88,7 @@ export default function ChatInput(
       csvFiles.length && reset();
       return;
     }
-    props.handleSubmit(e);
+    handleSubmit(e);
   };
 
   const onRemovePreviewImage = () => setImageUrl(null);
@@ -125,9 +137,9 @@ export default function ChatInput(
         }
         return await handleUploadCsvFile(file);
       }
-      props.onFileUpload?.(file);
+      onFileUpload?.(file);
     } catch (error: any) {
-      props.onFileError?.(error.message);
+      onFileError?.(error.message);
     }
   };
 
@@ -158,17 +170,22 @@ export default function ChatInput(
           name="message"
           placeholder="Type a message"
           className="flex-1"
-          value={props.input}
-          onChange={props.handleInputChange}
+          value={input}
+          onChange={handleInputChange}
         />
         <FileUploader
           onFileUpload={handleUploadFile}
-          onFileError={props.onFileError}
+          onFileError={onFileError}
         />
-        <Button type="submit" disabled={props.isLoading || !props.input.trim()}>
+        <Button type="submit" disabled={isLoading || !input.trim()}>
           Send message
         </Button>
       </div>
+      {handleAuthentication && (
+        <Button onClick={handleAuthentication} type="button">
+          Connect to Slack
+        </Button>
+      )}
     </form>
   );
 }
