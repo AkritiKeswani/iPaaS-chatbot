@@ -22,9 +22,7 @@ interface ChatInputProps
     | "messages"
     | "setInput"
     | "append"
-  > {
-  handleAuthentication?: () => Promise<void>;
-}
+  > {}
 
 export default function ChatInput({
   isLoading,
@@ -36,7 +34,6 @@ export default function ChatInput({
   messages,
   setInput,
   append,
-  handleAuthentication,
 }: ChatInputProps) {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const { files: csvFiles, upload, remove, reset } = useCsv();
@@ -181,11 +178,6 @@ export default function ChatInput({
           Send message
         </Button>
       </div>
-      {handleAuthentication && (
-        <Button onClick={handleAuthentication} type="button">
-          Connect to Slack
-        </Button>
-      )}
     </form>
   );
 }
