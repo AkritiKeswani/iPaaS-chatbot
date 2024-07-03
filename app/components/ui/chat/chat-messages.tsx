@@ -11,7 +11,11 @@ export default function ChatMessages(
   props: Pick<
     ChatHandler,
     "messages" | "isLoading" | "reload" | "stop" | "append"
-  >,
+  > & {
+    sendReply: (channel: string, ts: string, text: string) => Promise<any>;
+    channel: string | null;
+    ts: string | null;
+  },
 ) {
   const { starterQuestions } = useClientConfig();
   const scrollableChatContainerRef = useRef<HTMLDivElement>(null);
@@ -35,6 +39,16 @@ export default function ChatMessages(
   // that stream response is not yet received from the server,
   // so we show a loading indicator to give a better UX.
   const isPending = props.isLoading && !isLastMessageFromAssistant;
+
+  useEffect(() => {
+    if (props.channel && props.ts && !props.isLoading && isLastMessageFromAssistant) {
+      console.log("Sending reply to the last message from assistant:", lastMessage.content)
+      props.sendReply(props.channel, props.ts, lastMessage.content)
+        .then(response => console.log("Reply sent:", response))
+        .catch(error => console.error("Failed to send reply:", error));
+    }
+  }, [props.channel, props.ts, isPending, isLastMessageFromAssistant, lastMessage, props.isLoading]);
+
 
   useEffect(() => {
     scrollToBottom();
