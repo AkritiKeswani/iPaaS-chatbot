@@ -1,175 +1,98 @@
 "use client";
-import { Pinecone } from "@pinecone-database/pinecone";
-import dynamic from "next/dynamic";
-import { useEffect, useState } from "react";
-
-// Dynamically import Paragon SDK
-const ParagonSDK = dynamic(
-  () => import("@useparagon/connect").then((mod) => mod.paragon),
-  {
-    ssr: false,
-  },
-);
+import { paragon } from "@useparagon/connect";
+import { useEffect } from "react";
+import { text } from "stream/consumers";
+import { Pinecone } from '@pinecone-database/pinecone';
+import OpenAI from "openai";
 
 export default function IntegrationsPage() {
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [pineconeLoaded, setPineconeLoaded] = useState(false);
-  const [paragonLoaded, setParagonLoaded] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
   useEffect(() => {
-    const initializeClients = async () => {
+    const authenticate = async () => {
       try {
-        // Initialize Pinecone without passing configuration
-        const pinecone = new Pinecone();
-        // Test the connection by listing indexes
-        const indexes = await pinecone.listIndexes();
-        console.log("Pinecone indexes:", indexes);
-        setPineconeLoaded(true);
-
-        // Authenticate Paragon (only in browser environment)
-        if (typeof window !== "undefined" && ParagonSDK) {
-          await ParagonSDK.authenticate(
-            "5f407163-ca1d-4ae2-993a-00e2858cc6ed",
-            process.env.NEXT_PUBLIC_PARAGON_SIGNING_KEY || "",
-          );
-          console.log("Paragon authenticated successfully");
-          setParagonLoaded(true);
-        }
-      } catch (error) {
-        console.error("Error initializing clients:", error);
-        setError(
-          `Error initializing clients: ${error instanceof Error ? error.message : String(error)}`,
+        // Don't use this in production!
+        paragon.authenticate(
+          "5f407163-ca1d-4ae2-993a-00e2858cc6ed",
+          "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjMiLCJpYXQiOjE3MjAwODQ3MTIsImV4cCI6MTcyMDE3MTExMn0.Sah_RmknlvWf74IOL5oHl4f8Xi-HdDTpk9VFtqN7BgdgI1RK7Ps9cZYb5Lxum4hizbZG3KiHuGRW-g0Z7HnejHdeuWffEg-ZXMugefG-47ns58vOFVCeEWZ02d2ORXxeNH-LkjdtSynOx3erD05yBy3cL08UW-a0DhkakTpYZlHbOY9uksVt5rqQy-WpFfXGylR6lbs6bs1fUB8yn6C2tOgnHD5k4WOhAN4nEoQCoe1_HH26tDZl2KzkPxLYLAdQ4KOTU6jLPZTHQnNmk0QsIM1_WrSolZgFzBTekxX68K8goQMI6V0hHFB2eSE34nr2Lb2fusxHeg25fdvsvPkZ9wWgGAfnn7CtamuQPF-OOJkydhqXwoqmHeXKns5Y2O9T0jgMg6q_2kRDwj7lCn54TvOMyC0DOpvyR9uuyozgI_SLTB0bD6dIRBKVpm4qTSunWg3_DovjREgFG50i4AKLt7pgR2eCLugd5zAQm3F0TrjzQxOnlboIPsjv9rBo6YAaoWYlrgpWE5xPfwNEi9VAPEwlH1XG5jhomkiC5OAxmPZCpncpscYrmVcjAy0CQSsMz4xd_X_odCXaVNyc_enE2-2R8Gjnef57EK6HWbwdZLUdlDpRWq7Ryi4D5HGHhXNan1LogfPMMTaKfEX6YQl74CQnCjch99n-lK6HXVfXZ5I",
         );
+      } catch (error) {
+        console.error("Error during authentication:", error);
       }
     };
 
-    initializeClients();
-
-    // Set a timeout to prevent infinite loading
-    const timeoutId = setTimeout(() => {
-      if (!pineconeLoaded || !paragonLoaded) {
-        setError(
-          "Initialization timed out. Please refresh the page and try again.",
-        );
-      }
-    }, 10000); // 10 seconds timeout
-
-    return () => clearTimeout(timeoutId);
+    authenticate();
   }, []);
 
-  const handleConnection = async (integration: string) => {
-    if (typeof window !== "undefined" && ParagonSDK) {
-      try {
-        await ParagonSDK.connect(integration, {
-          onSuccess: () => {
-            console.log(`Successfully connected to ${integration}`);
-          },
-          onError: (error) => {
-            console.error(`Error connecting to ${integration}:`, error);
-          },
-        });
-      } catch (error) {
-        console.error(`Error in handleConnection for ${integration}:`, error);
-      }
-    }
+  const handleConnection = async (integration) => {
+    await paragon.connect(integration, {
+      onSuccess: () => {
+        console.log(`Successfully connected to ${integration}`);
+      },
+      onError: (error) => {
+        console.error(`Error connecting to ${integration}:`, error);
+      },
+    });
   };
-
-  const queryGoogleDriveFiles = async () => {
-    if (typeof window !== "undefined" && ParagonSDK) {
-      setIsProcessing(true);
-      try {
-        const result = await ParagonSDK.workflow(
-          "a6ee9917-8a81-443e-9231-721753b304bd",
-          {},
-        );
-
-        const textResponse = result.body_key;
-        console.log("Extracted text:", textResponse);
-
-        // Generate embeddings using OpenAI
-        const embeddings = await generateEmbeddings(textResponse);
-
-        // Send embeddings to Pinecone
-        await sendEmbeddingsToPinecone(textResponse, embeddings);
-
-        console.log("Process completed successfully");
-      } catch (error) {
-        console.error("Error processing Google Drive files:", error);
-      } finally {
-        setIsProcessing(false);
-      }
-    }
-  };
-
-  const generateEmbeddings = async (text: string) => {
-    try {
-      const response = await fetch("/api/generate-embeddings", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ text }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to generate embeddings");
-      }
-
-      const data = await response.json();
-      return data.embedding;
-    } catch (error) {
-      console.error("Error generating embeddings:", error);
-      throw error;
-    }
-  };
-
-  const sendEmbeddingsToPinecone = async (
-    text: string,
-    embeddings: number[],
-  ) => {
-    try {
-      const pinecone = new Pinecone();
-      const index = pinecone.Index(
-        process.env.NEXT_PUBLIC_PINECONE_INDEX_NAME || "",
-      );
-
-      // Generate a unique ID for this document
-      const id = `doc_${Date.now()}`;
-
-      // Prepare the vector data
-      const vectorData = {
-        id,
-        values: embeddings,
-        metadata: {
-          text: text.slice(0, 1000), // Store first 1000 characters as metadata
-          timestamp: new Date().toISOString(),
-        },
-      };
-
-      // Upsert the vector into Pinecone
-      await index.upsert([vectorData]);
-
-      console.log("Embeddings sent to Pinecone successfully");
-    } catch (error) {
-      console.error("Error sending embeddings to Pinecone:", error);
-      throw error;
-    }
-  };
-
-  if (error) {
-    return <div>Error: {error}</div>;
+  const PINECONE_API_KEY='6738058c-cfe3-41f2-b351-411af67e707d'
+  const PINECONE_ENVIRONMENT='us-east-1'
+  const INDEX_NAME='paragon-store'
+  const OPENAI_API_KEY = 'sk-proj-c54d6BiQplcm2r5YGudzT3BlbkFJo5XRM5tHNsuBJl8q2uZC'; 
+  
+  async function setupPinecone() {
+    const pinecone = new Pinecone({ apiKey: PINECONE_API_KEY });
+    const index = pinecone.Index(INDEX_NAME);
+    return index;
   }
-
-  if (!pineconeLoaded || !paragonLoaded) {
-    return (
-      <div>
-        <p>Loading...</p>
-        <p>Pinecone: {pineconeLoaded ? "Loaded" : "Loading"}</p>
-        <p>Paragon: {paragonLoaded ? "Loaded" : "Loading"}</p>
-      </div>
+  
+  async function getEmbedding(text) {
+    const openai = new OpenAI({ apiKey: OPENAI_API_KEY, dangerouslyAllowBrowser: true});
+    const response = await openai.embeddings.create({
+      model: 'text-embedding-3-small',
+      input: text,
+    });
+    return response.data[0].embedding;
+  }
+  
+  async function insertDataIntoPinecone(textResponse) {
+    const index = await setupPinecone();
+  
+    // Preprocess text data
+    const chunks = textResponse[0].split('\r\n\r\n\r\n');
+    const vectors = await Promise.all(chunks.map(async (chunk, id) => ({
+      id: id.toString(),
+      values: await getEmbedding(chunk),
+      metadata: { text: chunk }
+    })));
+  
+    // Insert vectors into Pinecone index
+    await index.upsert(
+      vectors
     );
   }
+  
+  const queryGoogleDriveFiles = async () => {
+    const result = await paragon.workflow(
+      "a6ee9917-8a81-443e-9231-721753b304bd",
+      {},
+    );
+  
+    const textResponse = result.body_key; 
+    console.log(textResponse)
+    await insertDataIntoPinecone(textResponse);
+  };
+
+
+  const sendMessage = async () => {
+    var eventName = "Send Message";
+    var eventPayload = {
+      creator: "Akriti Keswani",
+      summary: "Akriti needs to eat food.",
+      priority: "P1",
+      status: "Not Started",
+    };
+
+    // Trigger the "Task Created" App Event
+    paragon.event(eventName, eventPayload);
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -190,10 +113,15 @@ export default function IntegrationsPage() {
         </button>
         <button
           onClick={queryGoogleDriveFiles}
-          disabled={isProcessing}
           className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50 w-48"
         >
-          {isProcessing ? "Processing..." : "Query Google Drive Files"}
+          Query Google Drive Files
+        </button>
+        <button
+          onClick={sendMessage}
+          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50 w-48"
+        >
+          Send Message to Slack
         </button>
       </div>
     </div>
