@@ -1,9 +1,9 @@
 "use client";
+import { Pinecone } from "@pinecone-database/pinecone";
 import { paragon } from "@useparagon/connect";
-import { useEffect } from "react";
-import { text } from "stream/consumers";
-import { Pinecone } from '@pinecone-database/pinecone';
 import OpenAI from "openai";
+import { useEffect } from "react";
+import { FaGoogleDrive, FaSlack } from "react-icons/fa";
 
 export default function IntegrationsPage() {
   useEffect(() => {
@@ -32,54 +32,57 @@ export default function IntegrationsPage() {
       },
     });
   };
-  const PINECONE_API_KEY='6738058c-cfe3-41f2-b351-411af67e707d'
-  const PINECONE_ENVIRONMENT='us-east-1'
-  const INDEX_NAME='paragon-store'
-  const OPENAI_API_KEY = 'sk-proj-c54d6BiQplcm2r5YGudzT3BlbkFJo5XRM5tHNsuBJl8q2uZC'; 
-  
+  const PINECONE_API_KEY = "6738058c-cfe3-41f2-b351-411af67e707d";
+  const PINECONE_ENVIRONMENT = "us-east-1";
+  const INDEX_NAME = "paragon-store";
+  const OPENAI_API_KEY =
+    "sk-proj-c54d6BiQplcm2r5YGudzT3BlbkFJo5XRM5tHNsuBJl8q2uZC";
+
   async function setupPinecone() {
     const pinecone = new Pinecone({ apiKey: PINECONE_API_KEY });
     const index = pinecone.Index(INDEX_NAME);
     return index;
   }
-  
+
   async function getEmbedding(text) {
-    const openai = new OpenAI({ apiKey: OPENAI_API_KEY, dangerouslyAllowBrowser: true});
+    const openai = new OpenAI({
+      apiKey: OPENAI_API_KEY,
+      dangerouslyAllowBrowser: true,
+    });
     const response = await openai.embeddings.create({
-      model: 'text-embedding-3-small',
+      model: "text-embedding-3-small",
       input: text,
     });
     return response.data[0].embedding;
   }
-  
+
   async function insertDataIntoPinecone(textResponse) {
     const index = await setupPinecone();
-  
+
     // Preprocess text data
-    const chunks = textResponse[0].split('\r\n\r\n\r\n');
-    const vectors = await Promise.all(chunks.map(async (chunk, id) => ({
-      id: id.toString(),
-      values: await getEmbedding(chunk),
-      metadata: { text: chunk }
-    })));
-  
-    // Insert vectors into Pinecone index
-    await index.upsert(
-      vectors
+    const chunks = textResponse[0].split("\r\n\r\n\r\n");
+    const vectors = await Promise.all(
+      chunks.map(async (chunk, id) => ({
+        id: id.toString(),
+        values: await getEmbedding(chunk),
+        metadata: { text: chunk },
+      })),
     );
+
+    // Insert vectors into Pinecone index
+    await index.upsert(vectors);
   }
-  
+
   const queryGoogleDriveFiles = async () => {
     const result = await paragon.workflow(
       "a6ee9917-8a81-443e-9231-721753b304bd",
       {},
     );
-  
-    const textResponse = result.body_key; 
-    console.log(textResponse)
+
+    const textResponse = result.body_key;
+    console.log(textResponse);
     await insertDataIntoPinecone(textResponse);
   };
-
 
   const sendMessage = async () => {
     var eventName = "Send Message";
@@ -95,34 +98,37 @@ export default function IntegrationsPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6">Integrations</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
-      <div className="flex flex-col space-y-4 items-start">
-        <button
-          onClick={() => handleConnection("slack")}
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50 w-48"
-        >
-          Connect to Slack
-        </button>
-        <button
-          onClick={() => handleConnection("googledrive")}
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50 w-48"
-        >
-          Connect to Google Drive
-        </button>
-        <button
-          onClick={queryGoogleDriveFiles}
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50 w-48"
-        >
-          Query Google Drive Files
-        </button>
-        <button
-          onClick={sendMessage}
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50 w-48"
-        >
-          Send Message to Slack
-        </button>
+    <div className="flex items-center justify-center min-h-screen">
+      <div className="container mx-auto px-4 py-8">
+        <h1 className="text-3xl font-bold mb-6 text-center font-roboto">
+          Integrations
+        </h1>
+        <div className="flex flex-col items-center space-y-4 py-2">
+          <button
+            onClick={() => handleConnection("slack")}
+            className="flex items-center justify-center bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded-full shadow-lg transition duration-300 ease-in-out transform hover:-translate-y-1 w-48"
+          >
+            <FaSlack className="mr-2" /> Connect to Slack
+          </button>
+          <button
+            onClick={() => handleConnection("googledrive")}
+            className="flex items-center justify-center bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded-full shadow-lg transition duration-300 ease-in-out transform hover:-translate-y-1 w-48"
+          >
+            <FaGoogleDrive className="mr-2" /> Connect to Google Drive
+          </button>
+          <button
+            onClick={queryGoogleDriveFiles}
+            className="flex items-center justify-center bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded-full shadow-lg transition duration-300 ease-in-out transform hover:-translate-y-1 w-48"
+          >
+            <FaGoogleDrive className="mr-2" /> Choose Files to Ingest
+          </button>
+          {/* <button
+            onClick={sendMessage}
+            className="flex items-center justify-center bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded-full shadow-lg transition duration-300 ease-in-out transform hover:-translate-y-1 w-48"
+          >
+            <FaSlack className="mr-2" /> Send Message to Slack
+          </button> */}
+        </div>
       </div>
     </div>
   );
