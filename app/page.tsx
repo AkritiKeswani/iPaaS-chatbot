@@ -6,46 +6,45 @@ import { useState } from "react";
 export default function Login() {
   const router = useRouter();
   const [userID, setUserId] = useState("");
-  // const [password, setPassword] = useState("");
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Add your authentication logic here
     if (userID) {
       localStorage.setItem("isLoggedIn", "true");
-      router.push("/chat"); // Redirect to the chat page after login
+      router.push("/chat");
     } else {
-      alert("Please enter both userID");
+      alert("Please enter your User ID");
     }
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-white">
-      <form
-        onSubmit={handleLogin}
-        className="p-6 bg-gray-100 rounded shadow-md"
-      >
-        <input
-          type="text"
-          value={userID}
-          onChange={(e) => setUserId(e.target.value)}
-          placeholder="User ID"
-          className="w-full p-2 mb-4 border rounded"
-        />
-        {/* <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="Password"
-          className="w-full p-2 mb-4 border rounded"
-        /> */}
-        <button
-          type="submit"
-          className="w-full px-4 py-2 text-white bg-blue-500 rounded hover:bg-blue-600"
-        >
+    <div className="flex items-center justify-center min-h-screen bg-integration">
+      <div className="w-full max-w-md px-6 py-8 bg-white rounded-lg shadow-md">
+        <h1 className="text-3xl font-bold mb-6 text-center text-integration">
           Login
-        </button>
-      </form>
+        </h1>
+        <form onSubmit={handleLogin} className="space-y-6">
+          <div>
+            <label
+              htmlFor="userId"
+              className="block text-sm font-medium text-integration mb-1"
+            >
+              User ID
+            </label>
+            <input
+              id="userId"
+              type="text"
+              value={userID}
+              onChange={(e) => setUserId(e.target.value)}
+              placeholder="Enter your User ID"
+              className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <button type="submit" className="integration-button w-full">
+            Login
+          </button>
+        </form>
+      </div>
     </div>
   );
 }

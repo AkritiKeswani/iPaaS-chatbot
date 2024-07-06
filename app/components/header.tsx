@@ -3,34 +3,39 @@ import Link from "next/link";
 
 export default function Header() {
   return (
-    <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
-      <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-        Get started by editing&nbsp;
-        <code className="font-mono font-bold">app/page.tsx</code>
-      </p>
-      <div className="fixed bottom-0 left-0 mb-4 flex h-auto w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:w-auto lg:bg-none lg:mb-0">
-        <a
-          href="https://www.llamaindex.ai/"
-          className="flex items-center justify-center font-nunito text-lg font-bold gap-2"
-        >
-          <span>Built by LlamaIndex</span>
-          <Image
-            className="rounded-xl"
-            src="/llama.png"
-            alt="Llama Logo"
-            width={40}
-            height={40}
-            priority
-          />
-        </a>
+    <header className="bg-white shadow-md dark:bg-gray-800">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center py-4">
+          <div className="flex items-center">
+            <Link href="/" legacyBehavior>
+              <a className="flex items-center space-x-2">
+                <Image
+                  src="/llama.png"
+                  alt="Llama Logo"
+                  width={40}
+                  height={40}
+                  className="rounded-full"
+                />
+                <span className="text-xl font-bold text-gray-800 dark:text-white">
+                  LlamaIndex
+                </span>
+              </a>
+            </Link>
+          </div>
+          <nav className="flex items-center space-x-4">
+            <Link href="/chat" legacyBehavior>
+              <a className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors duration-200">
+                Chat
+              </a>
+            </Link>
+            <Link href="/integrations" legacyBehavior>
+              <a className="flex items-center justify-center bg-white hover:bg-gray-100 text-gray-800 font-medium py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:-translate-y-1">
+                Integrations
+              </a>
+            </Link>
+          </nav>
+        </div>
       </div>
-      <div className="fixed bottom-0 right-0 mb-4 flex h-auto w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:w-auto lg:bg-none lg:mb-0">
-        <Link href="/integrations" legacyBehavior>
-          <a className="flex items-center justify-center font-nunito text-lg font-bold gap-2">
-            Integrations
-          </a>
-        </Link>
-      </div>
-    </div>
+    </header>
   );
 }

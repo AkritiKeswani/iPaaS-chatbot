@@ -1,9 +1,9 @@
 "use client";
 import { Pinecone } from "@pinecone-database/pinecone";
 import { paragon } from "@useparagon/connect";
+import Image from "next/image";
 import OpenAI from "openai";
 import { useEffect } from "react";
-import { FaGoogleDrive, FaSlack } from "react-icons/fa";
 
 const PINECONE_API_KEY = "6738058c-cfe3-41f2-b351-411af67e707d";
 const PINECONE_ENVIRONMENT = "us-east-1";
@@ -140,36 +140,54 @@ export default function IntegrationsPage() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen">
-      <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-6 text-center font-roboto">
+    <div className="flex items-center justify-center min-h-screen bg-gray-50">
+      <div className="container mx-auto px-4 py-12 max-w-lg">
+        <h1 className="text-4xl font-extrabold mb-8 text-center text-gray-900">
           Integrations
         </h1>
-        <div className="flex flex-col items-center space-y-4 py-2">
+        <p className="text-lg text-gray-600 mb-8 text-center">
+          Connect your favorite tools to enhance your workflow.
+        </p>
+        <div className="flex flex-col items-center space-y-6">
           <button
             onClick={() => handleConnection("slack")}
-            className="flex items-center justify-center bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded-full shadow-lg transition duration-300 ease-in-out transform hover:-translate-y-1 w-48"
+            className="flex items-center justify-center bg-white hover:bg-gray-100 text-gray-800 font-medium py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:-translate-y-1 w-full max-w-sm"
           >
-            <FaSlack className="mr-2" /> Connect to Slack
+            <Image
+              src="/slack.png"
+              alt="Slack"
+              width={24}
+              height={24}
+              className="mr-3"
+            />
+            <span className="text-lg">Connect to Slack</span>
           </button>
           <button
             onClick={() => handleConnection("googledrive")}
-            className="flex items-center justify-center bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded-full shadow-lg transition duration-300 ease-in-out transform hover:-translate-y-1 w-48"
+            className="flex items-center justify-center bg-white hover:bg-gray-100 text-gray-800 font-medium py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:-translate-y-1 w-full max-w-sm"
           >
-            <FaGoogleDrive className="mr-2" /> Connect to Google Drive
+            <Image
+              src="/googledrive.png"
+              alt="Google Drive"
+              width={24}
+              height={24}
+              className="mr-3"
+            />
+            <span className="text-lg">Connect to Drive</span>
           </button>
           <button
             onClick={queryGoogleDriveFiles}
-            className="flex items-center justify-center bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded-full shadow-lg transition duration-300 ease-in-out transform hover:-translate-y-1 w-48"
+            className="flex items-center justify-center bg-white hover:bg-gray-100 text-gray-800 font-medium py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:-translate-y-1 w-full max-w-sm"
           >
-            <FaGoogleDrive className="mr-2" /> Choose Files to Ingest
+            <Image
+              src="/googledrive.png"
+              alt="Google Drive"
+              width={24}
+              height={24}
+              className="mr-3"
+            />
+            <span className="text-lg">Ingest Files</span>
           </button>
-          {/* <button
-            onClick={sendMessage}
-            className="flex items-center justify-center bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded-full shadow-lg transition duration-300 ease-in-out transform hover:-translate-y-1 w-48"
-          >
-            <FaSlack className="mr-2" /> Send Message to Slack
-          </button> */}
         </div>
       </div>
     </div>
