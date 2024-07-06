@@ -1,19 +1,59 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { paragon } from "@useparagon/connect";
 
 export default function Login() {
   const router = useRouter();
   const [userID, setUserId] = useState("");
+  const [error, setError] = useState("");
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (userID) {
-      localStorage.setItem("isLoggedIn", "true");
-      router.push("/chat");
-    } else {
-      alert("Please enter your User ID");
+    setError("");
+
+    if (!userID) {
+      setError("Please enter your User ID");
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/auth', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId: userID }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+
+        console.log("Login successful", data.user, data.token)
+
+        // Authenticate with Paragon using the received token
+        try {
+          await paragon.authenticate(
+            "5f407163-ca1d-4ae2-993a-00e2858cc6ed",
+            data.token
+          );
+          console.log("Paragon authentication with user token successful");
+        } catch (error) {
+          console.error("Error during Paragon authentication with user token:", error);
+          setError("Error authenticating with Paragon");
+          return;
+        }
+
+        // Redirect to chat page
+        router.push("/chat");
+      } else {
+        setError(data.message || "Login failed");
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      setError("An error occurred during login. Please try again.");
     }
   };
 
@@ -40,6 +80,7 @@ export default function Login() {
               className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
+          {error && <p className="text-red-500 text-sm">{error}</p>}
           <button type="submit" className="integration-button w-full">
             Login
           </button>
