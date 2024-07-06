@@ -23,11 +23,6 @@ export default function Header() {
             </Link>
           </div>
           <nav className="flex items-center space-x-4">
-            <Link href="/chat" legacyBehavior>
-              <a className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors duration-200">
-                Chat
-              </a>
-            </Link>
             <Link href="/integrations" legacyBehavior>
               <a className="flex items-center justify-center bg-white hover:bg-gray-100 text-gray-800 font-medium py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:-translate-y-1">
                 Integrations
