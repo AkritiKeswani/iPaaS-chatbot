@@ -54,10 +54,6 @@ export default function IntegrationsPage() {
         console.error(`Error connecting to ${integration}:`, error);
       },
     });
-
-    if (integration === "googledrive") {
-      queryGoogleDriveFiles();
-    }
   };
 
   return (
