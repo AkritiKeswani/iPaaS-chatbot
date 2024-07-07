@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState } from 'react';
 import { paragon } from "@useparagon/connect";
 import { useChat } from "ai/react";
+import { useState } from "react";
 import { ChatInput, ChatMessages } from "./ui/chat";
 import { useClientConfig } from "./ui/chat/hooks/use-config";
 
@@ -30,13 +30,11 @@ export default function ChatSection() {
     },
   });
 
-  const [channel, setChannel] = useState(null);
-  const [ts, setTs] = useState(null);
+  const [channel, setChannel] = useState<string | null>(null);
+  const [ts, setTs] = useState<string | null>(null);
 
-  const sendMessage = async (content: string) => {
-
+  const sendMessage = async (content: string): Promise<void> => {
     try {
-
       const result = await paragon.workflow(
         "179826e6-313e-4a0b-a4e2-872eed2c69ff",
         {
@@ -46,36 +44,40 @@ export default function ChatSection() {
         },
       );
 
-      setChannel(result.body_key.channel);
-      setTs(result.body_key.message.ts);
-
+      if (result) {
+        setChannel(result.body_key.channel);
+        setTs(result.body_key.message.ts);
+      } else {
+        throw new Error("Workflow result is undefined");
+      }
     } catch (error) {
-      // Handle any errors that occur during the event triggering
       console.error("Error sending event:", error);
-
-      // Optionally, you can throw the error to handle it further up the call stack
       throw error;
     }
   };
 
-  const sendReply = async (channel: string, ts: string, text: string) => {
+  const sendReply = async (
+    channel: string,
+    ts: string,
+    text: string,
+  ): Promise<void> => {
     try {
-
       const response = await paragon.request("slack", "/chat.postMessage", {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: {
-          channel: channel,
+          channel,
           thread_ts: ts,
-          text: text,
-        }
+          text,
+        },
       });
-  
+
       console.log("Message sent successfully:", response);
-  
-      return response; // Return the response if you need to use it later
     } catch (error) {
       console.error("Error sending message:", error);
-      throw error; // Throw the error to handle it further up the call stack
+      throw error;
     }
   };
 
